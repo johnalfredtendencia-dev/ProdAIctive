@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Google from 'expo-auth-session/providers/google';
+import * as Facebook from 'expo-auth-session/providers/facebook';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from 'react';
@@ -18,19 +19,33 @@ export default function LoginScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
 
-    const [request, response, promptAsync] = Google.useAuthRequest({
+    const [googleRequest, googleResponse, googlePromptAsync] = Google.useAuthRequest({
         clientId: '1234567890-abcdefg.apps.googleusercontent.com', // Replace with your Google OAuth Client ID
         redirectUrl: 'https://auth.expo.io/@yourusername/ProdAIctive', // Replace with your Expo redirect URL
     });
 
+    const [facebookRequest, facebookResponse, facebookPromptAsync] = Facebook.useAuthRequest({
+        clientId: '1234567890', // Replace with your Facebook App ID
+        redirectUrl: 'https://auth.expo.io/@yourusername/ProdAIctive', // Replace with your Expo redirect URL
+    });
+
     useEffect(() => {
-        if (response?.type === 'success') {
-            const { authentication } = response;
+        if (googleResponse?.type === 'success') {
+            const { authentication } = googleResponse;
             // User successfully authenticated with Google
             // You can now use authentication.accessToken to get user info
             loginWithGoogle(authentication?.accessToken);
         }
-    }, [response]);
+    }, [googleResponse]);
+
+    useEffect(() => {
+        if (facebookResponse?.type === 'success') {
+            const { authentication } = facebookResponse;
+            // User successfully authenticated with Facebook
+            // You can now use authentication.accessToken to get user info
+            loginWithFacebook(authentication?.accessToken);
+        }
+    }, [facebookResponse]);
 
     const handleLogin = () => {
         setError(''); // Clear previous errors
@@ -55,9 +70,9 @@ export default function LoginScreen() {
 
     const handleSocialLogin = (provider: 'google' | 'facebook') => {
         if (provider === 'google') {
-            promptAsync();
+            googlePromptAsync();
         } else if (provider === 'facebook') {
-            console.log('Continue with facebook');
+            facebookPromptAsync();
         }
     };
 
@@ -69,6 +84,16 @@ export default function LoginScreen() {
         // For demo purposes, navigate to dashboard
         // In a real app, you'd send this token to your backend to verify and create/update user
         router.replace({ pathname: '/(tabs)', params: { fullName: 'Google User' } });
+    };
+
+    const loginWithFacebook = (accessToken?: string) => {
+        if (!accessToken) {
+            setError('Facebook authentication failed. Please try again.');
+            return;
+        }
+        // For demo purposes, navigate to dashboard
+        // In a real app, you'd send this token to your backend to verify and create/update user
+        router.replace({ pathname: '/(tabs)', params: { fullName: 'Facebook User' } });
     };
 
     return (
