@@ -1,0 +1,9 @@
+user_id,title,description,priority,is_completed,due_date
+550e8400-e29b-41d4-a716-446655440000,Complete ProdAIctive MVP,Finish all core features development,High,false,2026-02-28
+550e8400-e29b-41d4-a716-446655440000,Deploy to App Store,Submit iOS and Android builds,High,false,2026-03-15
+550e8400-e29b-41d4-a716-446655440000,Write API Documentation,Create comprehensive API docs,Medium,true,2026-01-31
+550e8400-e29b-41d4-a716-446655440001,Review Code Changes,Code review for pull requests,High,false,2026-01-20
+550e8400-e29b-41d4-a716-446655440002,Test Authentication,QA testing for auth flows,Medium,false,2026-01-25
+550e8400-e29b-41d4-a716-446655440003,Implement Dark Mode,Add dark theme support,Low,false,2026-03-01
+550e8400-e29b-41d4-a716-446655440000,Setup Monitoring,Configure error tracking and analytics,High,false,2026-02-10
+550e8400-e29b-41d4-a716-446655440001,Database Optimization,Optimize slow queries,Medium,false,2026-02-05
