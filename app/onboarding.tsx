@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import GradientButton from '../components/GradientButton';
 import Colors from '../constants/Colors';
 
@@ -48,8 +49,8 @@ export default function OnboardingScreen() {
 
     const completeOnboarding = () => {
         // Navigate to the Login screen
-        // Make sure you have the file app/login.tsx created!
-        router.replace('/login');
+        // Use router.push to go forward (not replace to avoid stack issues)
+        router.push('/login');
     };
 
     const Slide = ({ item }: { item: (typeof SLIDES)[0] }) => (
@@ -75,14 +76,15 @@ export default function OnboardingScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.contentContainer}>
+        <ErrorBoundary>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.contentContainer}>
 
-                {/* Render Current Slide */}
-                <Slide item={SLIDES[currentSlideIndex]} />
+                    {/* Render Current Slide */}
+                    <Slide item={SLIDES[currentSlideIndex]} />
 
-                {/* Footer: Dots & Buttons */}
-                <View style={styles.footer}>
+                    {/* Footer: Dots & Buttons */}
+                    <View style={styles.footer}>
 
                     {/* Pagination Dots */}
                     <View style={styles.pagination}>
@@ -118,6 +120,7 @@ export default function OnboardingScreen() {
 
             </View>
         </SafeAreaView>
+        </ErrorBoundary>
     );
 }
 

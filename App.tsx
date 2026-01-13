@@ -10,9 +10,10 @@ import {
     UserCircle,
     X
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Dimensions,
+    LogBox,
     Modal,
     ScrollView,
     StatusBar,
@@ -20,9 +21,12 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+// Suppress the keep-awake warning
+LogBox.ignoreLogs(['Unable to activate keep awake']);
 
 // --- Import Screens ---
 import FocusScreen from './app/(tabs)/focus';
@@ -77,11 +81,11 @@ export default function App() {
 
     const renderContent = () => {
         switch (currentView) {
-            case 'dashboard': return <DashboardView tasks={tasks} />;
+            case 'dashboard': return <DashboardView tasks={tasks} onOpenNew={openNewTaskModal} />;
             case 'tasks': return <TaskPage tasks={tasks} onToggleComplete={toggleTaskCompletion} onEdit={openEditModal} onOpenNew={openNewTaskModal} />;
             case 'focus': return <FocusScreen />;
             case 'settings': return <SettingsScreen />;
-            default: return <DashboardView tasks={tasks} />;
+            default: return <DashboardView tasks={tasks} onOpenNew={openNewTaskModal} />;
         }
     };
 
@@ -126,8 +130,9 @@ export default function App() {
 
 // --- Sub-Components ---
 
-function DashboardView({ tasks }: { tasks: Task[] }) {
+function DashboardView({ tasks, onOpenNew }: { tasks: Task[]; onOpenNew: () => void }) {
     const pendingCount = tasks.filter(t => !t.completed).length;
+    
     return (
         <View>
             <View style={styles.header}>
@@ -148,7 +153,7 @@ function DashboardView({ tasks }: { tasks: Task[] }) {
                         <Text style={styles.actionButtonTextPrimary}>Calendar</Text>
                     </LinearGradient>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButtonSecondary}>
+                <TouchableOpacity style={styles.actionButtonSecondary} onPress={onOpenNew}>
                     <Plus size={24} color={Theme.grayText} />
                     <Text style={styles.actionButtonTextSecondary}>Quick Add</Text>
                 </TouchableOpacity>

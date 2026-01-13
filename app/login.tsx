@@ -1,14 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as Google from 'expo-auth-session/providers/google';
 import * as Facebook from 'expo-auth-session/providers/facebook';
-import { Link, useLocalSearchParams, useRouter } from 'expo-router';
+import * as Google from 'expo-auth-session/providers/google';
+import { Link, useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useEffect, useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import GradientButton from '../components/GradientButton';
 import InputField from '../components/InputField';
 import Colors from '../constants/Colors';
+import { supabase } from '../services/supabaseApi';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -16,17 +19,17 @@ export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const params = useLocalSearchParams();
 
     const [googleRequest, googleResponse, googlePromptAsync] = Google.useAuthRequest({
         clientId: '1234567890-abcdefg.apps.googleusercontent.com', // Replace with your Google OAuth Client ID
-        redirectUrl: 'https://auth.expo.io/@yourusername/ProdAIctive', // Replace with your Expo redirect URL
+        redirectUri: 'https://auth.expo.io/@yourusername/ProdAIctive', // Replace with your Expo redirect URL
     });
 
     const [facebookRequest, facebookResponse, facebookPromptAsync] = Facebook.useAuthRequest({
         clientId: '1234567890', // Replace with your Facebook App ID
-        redirectUrl: 'https://auth.expo.io/@yourusername/ProdAIctive', // Replace with your Expo redirect URL
+        redirectUri: 'https://auth.expo.io/@yourusername/ProdAIctive', // Replace with your Expo redirect URL
     });
 
     useEffect(() => {
@@ -54,17 +57,41 @@ export default function LoginScreen() {
             return;
         }
 
-        // Simulate checking credentials passed from sign-up
-        if (params.email && params.password) {
-            if (email === params.email && password === params.password) {
-                // On successful login, navigate to the dashboard with user's name
-                router.replace({ pathname: '/(tabs)', params: { fullName: params.fullName } });
-            } else {
-                setError('Invalid email or password.');
+        handleSignIn();
+    };
+
+    const handleSignIn = async () => {
+        if (!email || !password) {
+            setError('Please enter your email and password.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const { data, error: signInError } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (signInError) {
+                setError(signInError.message);
+                setLoading(false);
+                return;
             }
-        } else {
-            // If no params, it means user hasn't signed up in this session
-            setError('Please sign up first.');
+
+            if (data.user && data.session) {
+                // Save auth token and user info to secure storage
+                await SecureStore.setItemAsync('authToken', data.session.access_token);
+                await SecureStore.setItemAsync('userId', data.user.id);
+                await SecureStore.setItemAsync('userEmail', data.user.email || '');
+
+                // Navigate to dashboard
+                router.replace('/(tabs)');
+            }
+        } catch (error: any) {
+            setError(error.message || 'An error occurred during login.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -76,29 +103,40 @@ export default function LoginScreen() {
         }
     };
 
-    const loginWithGoogle = (accessToken?: string) => {
+    const loginWithGoogle = async (accessToken?: string) => {
         if (!accessToken) {
             setError('Google authentication failed. Please try again.');
             return;
         }
-        // For demo purposes, navigate to dashboard
-        // In a real app, you'd send this token to your backend to verify and create/update user
-        router.replace({ pathname: '/(tabs)', params: { fullName: 'Google User' } });
+        setLoading(true);
+        try {
+            // TODO: Implement Google OAuth with Supabase
+            // This requires additional Supabase configuration
+            setError('Google authentication is not yet configured. Please use email/password.');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const loginWithFacebook = (accessToken?: string) => {
+    const loginWithFacebook = async (accessToken?: string) => {
         if (!accessToken) {
             setError('Facebook authentication failed. Please try again.');
             return;
         }
-        // For demo purposes, navigate to dashboard
-        // In a real app, you'd send this token to your backend to verify and create/update user
-        router.replace({ pathname: '/(tabs)', params: { fullName: 'Facebook User' } });
+        setLoading(true);
+        try {
+            // TODO: Implement Facebook OAuth with Supabase
+            // This requires additional Supabase configuration
+            setError('Facebook authentication is not yet configured. Please use email/password.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.content}>
+        <ErrorBoundary>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.content}>
 
                 {/* Logo */}
                 <View style={styles.logoContainer}>
@@ -129,7 +167,14 @@ export default function LoginScreen() {
 
                     {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-                    <GradientButton title="Sign In" onPress={handleLogin} />
+                    {loading ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color={Colors.primary} />
+                            <Text style={styles.loadingText}>Signing in...</Text>
+                        </View>
+                    ) : (
+                        <GradientButton title="Sign In" onPress={handleLogin} />
+                    )}
 
                     <View style={styles.dividerContainer}>
                         <View style={styles.dividerLine} />
@@ -161,6 +206,7 @@ export default function LoginScreen() {
 
             </View>
         </SafeAreaView>
+        </ErrorBoundary>
     );
 }
 
@@ -218,6 +264,17 @@ const styles = StyleSheet.create({
         color: 'red',
         textAlign: 'center',
         marginBottom: 10,
+    },
+    loadingContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 20,
+        gap: 10,
+    },
+    loadingText: {
+        color: Colors.primary,
+        fontSize: 14,
+        fontWeight: '500',
     },
     dividerContainer: {
         flexDirection: 'row',

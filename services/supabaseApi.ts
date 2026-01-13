@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://ubndjsgzpkgtusevrksf.supabase.co';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVibmRqc2d6cGtndHVzZXZya3NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMDQ3MzksImV4cCI6MjA4MzY4MDczOX0.axlZe8P4Bsurp_MkK35ZplvOUwSkftDQymqwy-2QrsQ';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -174,7 +174,7 @@ export const taskAPI = {
         .insert([
           {
             ...taskData,
-            user_id: userData.user?.id,
+            users_id: userData.user?.id,
           },
         ])
         .select();
@@ -250,7 +250,7 @@ export const focusAPI = {
         .insert([
           {
             ...sessionData,
-            user_id: userData.user?.id,
+            users_id: userData.user?.id,
           },
         ])
         .select();
@@ -301,11 +301,11 @@ export const focusAPI = {
       const sessions = data || [];
       const statistics = {
         totalSessions: sessions.length,
-        totalFocusTime: sessions.reduce((sum, s) => sum + (s.duration || 0), 0),
-        totalBreakTime: sessions.reduce((sum, s) => sum + (s.break_duration || 0), 0),
-        totalPomodoros: sessions.reduce((sum, s) => sum + (s.sessions_completed || 0), 0),
+        totalFocusTime: sessions.reduce((sum: number, s: any) => sum + (s.duration || 0), 0),
+        totalBreakTime: sessions.reduce((sum: number, s: any) => sum + (s.break_duration || 0), 0),
+        totalPomodoros: sessions.reduce((sum: number, s: any) => sum + (s.sessions_completed || 0), 0),
         averageSessionDuration: sessions.length > 0
-          ? sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / sessions.length
+          ? sessions.reduce((sum: number, s: any) => sum + (s.duration || 0), 0) / sessions.length
           : 0,
       };
 
@@ -332,7 +332,7 @@ export const chatAPI = {
       const { data: sessions } = await supabase
         .from('chat_sessions')
         .select('*')
-        .eq('user_id', userData.user?.id)
+        .eq('users_id', userData.user?.id)
         .limit(1);
 
       if (sessions && sessions.length > 0) {
@@ -347,7 +347,7 @@ export const chatAPI = {
         .from('chat_sessions')
         .insert([
           {
-            user_id: userData.user?.id,
+            users_id: userData.user?.id,
             title: 'Chat Session',
           },
         ])

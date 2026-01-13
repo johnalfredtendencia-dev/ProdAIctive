@@ -1,10 +1,12 @@
 import { Link, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+import { useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import GradientButton from '../components/GradientButton';
 import InputField from '../components/InputField';
 import Colors from '../constants/Colors';
+import { supabase } from '../services/supabaseApi';
 
 export default function SignUpScreen() {
     const [fullName, setFullName] = useState('');
@@ -12,9 +14,10 @@ export default function SignUpScreen() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const handleSignUp = () => {
+    const handleSignUp = async () => {
         setError(''); // Clear previous errors
         if (!fullName || !email || !password || !confirmPassword) {
             setError('Please fill in all fields.');
@@ -24,12 +27,62 @@ export default function SignUpScreen() {
             setError('Passwords do not match.');
             return;
         }
-        console.log("Signing up with:", fullName, email);
-        // Navigate to login page with the new user's data
-        router.replace({
-            pathname: '/login',
-            params: { email, password, fullName },
-        });
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            // Sign up with Supabase Auth
+            const { data, error: signUpError } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: fullName,
+                    },
+                },
+            });
+
+            if (signUpError) {
+                setError(signUpError.message);
+                setLoading(false);
+                return;
+            }
+
+            if (data.user) {
+                // Save auth token
+                if (data.session?.access_token) {
+                    await SecureStore.setItemAsync('authToken', data.session.access_token);
+                    await SecureStore.setItemAsync('userId', data.user.id);
+                    await SecureStore.setItemAsync('userEmail', data.user.email || '');
+                }
+
+                // Create user profile in database
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .insert([
+                        {
+                            id: data.user.id,
+                            full_name: fullName,
+                            email: email,
+                            created_at: new Date().toISOString(),
+                        },
+                    ]);
+
+                if (profileError) {
+                    console.warn('Profile creation warning:', profileError.message);
+                }
+
+                // Navigate to dashboard
+                router.replace('/(tabs)');
+            }
+        } catch (error: any) {
+            setError(error.message || 'An error occurred during sign up.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -74,7 +127,14 @@ export default function SignUpScreen() {
                         secureTextEntry />
 
                     {error ? <Text style={styles.errorText}>{error}</Text> : null}
-                    <GradientButton title="Sign Up" onPress={handleSignUp} />
+                    {loading ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color={Colors.primary} />
+                            <Text style={styles.loadingText}>Creating your account...</Text>
+                        </View>
+                    ) : (
+                        <GradientButton title="Sign Up" onPress={handleSignUp} />
+                    )}
 
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>Already a member? </Text>
@@ -144,5 +204,16 @@ const styles = StyleSheet.create({
         color: 'red',
         textAlign: 'center',
         marginBottom: 10,
+    },
+    loadingContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 20,
+    },
+    loadingText: {
+        marginTop: 10,
+        color: Colors.primary,
+        fontSize: 14,
+        fontWeight: '500',
     },
 });

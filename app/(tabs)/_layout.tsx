@@ -1,31 +1,28 @@
 import { Tabs } from 'expo-router';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-    CheckSquare,
-    Home,
-    Settings,
-    Sparkles,
-    Timer
+  CheckSquare,
+  Home,
+  Settings,
+  Sparkles,
+  Timer
 } from 'lucide-react-native';
-import { View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { ChatBot } from '../../components/ChatBot';
-
-const Theme = {
-  primary: '#FF5A5F',
-  grayText: '#A0A0A0',
-};
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function TabLayout() {
+  const { colors, isDarkMode } = useTheme();
   const [chatOpen, setChatOpen] = useState(false);
 
   return (
     <View style={{ flex: 1 }}>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: Theme.primary,
-          tabBarInactiveTintColor: Theme.grayText,
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.grayText,
           headerShown: false,
           tabBarStyle: {
             position: 'absolute',
@@ -33,60 +30,70 @@ export default function TabLayout() {
             left: 0,
             right: 0,
             elevation: 0,
-            backgroundColor: 'white',
+            backgroundColor: colors.navBarBg,
             borderTopWidth: 1,
-            borderTopColor: '#F0F0F0',
-            height: 90,
+            borderTopColor: colors.border,
+            height: 60,
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+          tabBarItemStyle: {
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: 0,
+            paddingHorizontal: 0,
           },
           tabBarShowLabel: false,
         }}>
         <Tabs.Screen
           name="index"
           options={{
-            tabBarIcon: ({ color }) => <Home size={28} color={color} />,
+            tabBarIcon: ({ color }: { color: string }) => <Home size={28} color={color} />,
           }}
         />
         <Tabs.Screen
           name="tasks"
           options={{
-            tabBarIcon: ({ color }) => <CheckSquare size={28} color={color} />,
+            tabBarIcon: ({ color }: { color: string }) => <CheckSquare size={28} color={color} />,
           }}
         />
         <Tabs.Screen
           name="ai"
           options={{
             tabBarIcon: () => (
-              <LinearGradient
-                colors={[Theme.primary, '#FF8085']}
-                style={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: 30,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  top: -20,
-                  shadowColor: Theme.primary,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 4,
-                  elevation: 5,
-                }}
-              >
-                <Sparkles size={32} color="white" onPress={() => setChatOpen(!chatOpen)} />
-              </LinearGradient>
+              <TouchableOpacity onPress={() => setChatOpen(!chatOpen)}>
+                <LinearGradient
+                  colors={colors.primaryGradient}
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: 30,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    top: -20,
+                    shadowColor: colors.primary,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 4,
+                    elevation: 5,
+                  }}
+                >
+                  <Sparkles size={32} color="white" />
+                </LinearGradient>
+              </TouchableOpacity>
             ),
           }}
         />
         <Tabs.Screen
           name="focus"
           options={{
-            tabBarIcon: ({ color }) => <Timer size={28} color={color} />,
+            tabBarIcon: ({ color }: { color: string }) => <Timer size={28} color={color} />,
           }}
         />
         <Tabs.Screen
           name="settings"
           options={{
-            tabBarIcon: ({ color }) => <Settings size={28} color={color} />,
+            tabBarIcon: ({ color }: { color: string }) => <Settings size={28} color={color} />,
           }}
         />
       </Tabs>
